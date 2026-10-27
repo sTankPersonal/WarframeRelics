@@ -1,0 +1,17 @@
+<div class="toolbar">
+  <input type="search" placeholder="Search wishlist…" [(ngModel)]="search" />
+  <label><input type="checkbox" [(ngModel)]="onlyFarmable" /> Only farmable now</label>
+  <span class="summary">{{ filteredItems().length }} / {{ wishlistItems().length }} items</span>
+</div>
+
+<div class="grid">
+  @for (item of filteredItems(); track item.id) {
+    <app-item-card [item]="item" />
+  } @empty {
+    @if (wishlistItems().length === 0) {
+      <p>Your wishlist is empty. Star items on the Prime Items page to add them here.</p>
+    } @else {
+      <p>No wishlist items match.</p>
+    }
+  }
+</div>

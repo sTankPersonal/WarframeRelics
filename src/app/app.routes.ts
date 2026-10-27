@@ -13,5 +13,10 @@ export const routes: Routes = [
     title: 'Relics | Relic Tracker',
     loadComponent: () => import('./relics/relics-page').then((m) => m.RelicsPage),
   },
+  {
+    path: 'wishlist',
+    title: 'Wishlist | Relic Tracker',
+    loadComponent: () => import('./wishlist/wishlist-page').then((m) => m.WishlistPage),
+  },
   { path: '**', redirectTo: 'items' },
 ];

@@ -1,11 +1,3 @@
-.summary {
-  margin-left: auto;
-  color: var(--muted);
-}
-
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-  align-items: start;
+  --card-min-width: 280px;
 }

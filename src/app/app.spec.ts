@@ -24,7 +24,7 @@ describe('App', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Relic Tracker');
-    expect(compiled.querySelectorAll('nav a').length).toBe(2);
+    expect(compiled.querySelectorAll('nav a').length).toBe(3);
     expect(compiled.querySelector('footer')?.textContent).toContain('2026');
   });
 });

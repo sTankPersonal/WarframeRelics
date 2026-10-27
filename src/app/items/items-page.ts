@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ItemCategory, PrimeItem } from '../data/models';
+import { ItemCategory } from '../data/models';
 import { ProgressService } from '../data/progress.service';
 import { WarframeDataService } from '../data/warframe-data.service';
 import { ItemCard } from './item-card';
@@ -30,7 +30,7 @@ export class ItemsPage {
         item.name.toLowerCase().includes(search) &&
         (this.category() === 'All' || item.category === this.category()) &&
         !(this.hideComplete() && this.progress.isComplete(item)) &&
-        (!this.onlyFarmable() || this.progress.isComplete(item) || this.canFarm(item)),
+        (!this.onlyFarmable() || this.progress.isComplete(item) || this.progress.canFarm(item)),
     );
   });
 
@@ -41,12 +41,4 @@ export class ItemsPage {
 
 
   protected readonly onlyFarmable = signal(false);
-
-  private canFarm(item: PrimeItem): boolean {
-    return item.parts.some(
-      (part) => 
-        this.progress.isPartNeeded(item, part) &&
-        (this.data.sourcesByPart().get(part.id) ?? []).some((s) => !s.relic.vaulted),
-    );
-  }
 }

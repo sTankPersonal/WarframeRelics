@@ -10,12 +10,14 @@ export interface Progress {
   built: Record<string, boolean>;
   /** relicId -> how many the user owns */
   relics: Record<string, number>;
+  /** itemId -> true if the user put the item on their wishlist */
+  favourites: Record<string, boolean>;
 }
 
 export const STORAGE_KEY = 'relic-tracker.progress';
 
 function loadProgress(): Progress {
-  const empty: Progress = { parts: {}, built: {}, relics: {} };
+  const empty: Progress = { parts: {}, built: {}, relics: {}, favourites: {} };
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? { ...empty, ...JSON.parse(saved) } : empty;
@@ -50,6 +52,14 @@ export class ProgressService {
     this.state.update((s) => ({ ...s, built: { ...s.built, [itemId]: built } }));
   }
 
+  isFavourite(itemId: string): boolean {
+    return this.state().favourites[itemId] ?? false;
+  }
+
+  setFavourite(itemId: string, favourite: boolean): void {
+    this.state.update((s) => ({ ...s, favourites: { ...s.favourites, [itemId]: favourite } }));
+  }
+
   relicCount(relicId: string): number {
     return this.state().relics[relicId] ?? 0;
   }
@@ -73,5 +83,13 @@ export class ProgressService {
   /** True if the item is built, or every part needed to build it is owned. */
   isComplete(item: PrimeItem): boolean {
     return item.parts.every((part) => !this.isPartNeeded(item, part));
+  }
+
+  canFarm(item: PrimeItem): boolean {
+    return item.parts.some(
+      (part) => 
+        this.isPartNeeded(item, part) &&
+      (this.data.sourcesByPart().get(part.id) ?? []).some((s) => !s.relic.vaulted),
+    );
   }
 }

@@ -18,6 +18,7 @@ export class ItemCard {
   readonly item = input.required<PrimeItem>();
 
   protected readonly built = computed(() => this.progress.isBuilt(this.item().id));
+  protected readonly favourite = computed(() => this.progress.isFavourite(this.item().id));
   protected readonly complete = computed(() => this.progress.isComplete(this.item()));
 
   /** The item's parts, each with the relics that drop it split into unvaulted/vaulted. */
