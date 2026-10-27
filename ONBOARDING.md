@@ -21,6 +21,7 @@ a change. Come back to sections 7–10 when you're stuck.
 9. [Cheat sheet](#9-cheat-sheet)
 10. [Glossary](#10-glossary)
 11. [Tips and next steps](#11-tips-and-next-steps)
+12. [Ideas to build yourself](#12-ideas-to-build-yourself)
 
 ---
 
@@ -661,6 +662,628 @@ npx ng generate component path/name --flat --dry-run   # preview only, writes no
 - When you want to change something, find a similar thing the app already does and copy its
   pattern. The two pages are close copies of each other, so comparing them is a good way to see
   which parts are the "Angular way" and which are specific to one page.
-- The end of the [README](README.md) lists suggested next steps, roughly in order of difficulty:
-  import/export progress, an `/items/:id` detail page, ducat values, refinement odds.
+- For practice projects, see [Ideas to build yourself](#12-ideas-to-build-yourself) below.
 - The official tutorial and guides at https://angular.dev cover each of these concepts in more depth.
+
+## 12. Ideas to build yourself
+
+Practice projects, grouped from easiest to hardest. Each says what you'll learn and where to start.
+Try it on your own first; if you get stuck, open the hints one at a time. **Hint 1** points you in
+the right direction, and **Hint 2** is closer to a solution.
+
+Before you start each one:
+
+- **Commit your work first.** If the new feature goes wrong, `git diff` shows what you changed and
+  `git restore <file>` takes a file back to the last commit.
+- **Find the closest thing the app already does** and copy its pattern. Section 6 walks through
+  the common cases.
+- **Check with `git status`** in the terminal before committing; it's never out of date, unlike
+  VS Code's Source Control view can be.
+
+### Warm-ups: reuse patterns you've already used
+
+#### 1. Category filter on the Wishlist
+
+Add the "All categories" dropdown from the Items page to the Wishlist page.
+
+- *You'll learn:* `<select>` with `[(ngModel)]`, and `@for` inside `<option>`.
+- *Start:* [items-page.ts](src/app/items/items-page.ts) has `category` and `categories`, and
+  [items-page.html](src/app/items/items-page.html) has the `<select>`.
+
+<details>
+<summary>Hint 1</summary>
+
+Copy three things from the Items page: the `category` signal, the `categories` computed, and the
+`<select>` in the template. The wishlist already imports `FormsModule`, so `[(ngModel)]` works.
+Then add a category condition to `filteredItems`, the same one the Items page uses.
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+Decide what the dropdown should list. The Items page lists every category. On the wishlist it's
+nicer to list only categories you've starred something in, so build it from `wishlistItems()`
+instead of `this.data.items()`:
+
+```ts
+protected readonly categories = computed(() => [
+  ...new Set(this.wishlistItems().map((item) => item.category)),
+]);
+```
+
+`new Set(...)` removes duplicates, and `[... ]` turns the set back into an array. The extra
+condition for `filteredItems` is:
+
+```ts
+(this.category() === 'All' || item.category === this.category())
+```
+
+</details>
+
+#### 2. Wishlist count in the nav
+
+Show "Wishlist (3)" in the header.
+
+- *You'll learn:* using a service from the root component.
+- *Start:* [app.ts](src/app/app.ts) and [app.html](src/app/app.html).
+
+<details>
+<summary>Hint 1</summary>
+
+`App` already injects `WarframeDataService`. It also needs `ProgressService`, plus a `computed` that
+counts starred items. Then show it in the nav link with `{{ ... }}`. Run `npm test` afterwards:
+[app.spec.ts](src/app/app.spec.ts) checks the nav, so see whether it still passes.
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+```ts
+protected readonly progress = inject(ProgressService);
+
+protected readonly wishlistCount = computed(
+  () => this.data.items().filter((item) => this.progress.isFavourite(item.id)).length,
+);
+```
+
+```html
+<a routerLink="/wishlist" routerLinkActive="active">Wishlist ({{ wishlistCount() }})</a>
+```
+
+That filter is now written twice, here and in the wishlist page's `wishlistItems`. To tidy up,
+move it into `ProgressService` as `readonly favouriteItems = computed(...)` (the service already has
+`this.data`), and use `progress.favouriteItems()` in both places.
+
+</details>
+
+#### 3. Progress on each item card
+
+Show "3 / 5" or a small progress bar in each item card's header.
+
+- *You'll learn:* `computed` inside a card, and style bindings like `[style.width.%]`.
+- *Start:* [item-card.ts](src/app/items/item-card.ts). It already has `built` and `complete`
+  computeds to copy.
+
+<details>
+<summary>Hint 1</summary>
+
+You need two numbers: how many parts are done, and how many there are. "How many there are" is
+`item().parts.length`. "Done" means a part that isn't needed any more. `progress.isPartNeeded`
+already answers that, and for built items it says every part is done.
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+```ts
+protected readonly partsDone = computed(
+  () => this.item().parts.filter((part) => !this.progress.isPartNeeded(this.item(), part)).length,
+);
+```
+
+For text: `{{ partsDone() }} / {{ item().parts.length }}`. For a bar, two nested `<div>`s, with the
+inner width bound to a percentage:
+
+```html
+<div class="bar"><div class="fill" [style.width.%]="(partsDone() / item().parts.length) * 100"></div></div>
+```
+
+Give `.bar` a height and background, and `.fill` a colour like `var(--success)`, in
+[item-card.scss](src/app/items/item-card.scss).
+
+</details>
+
+#### 4. Sorting
+
+Add a "Sort by" dropdown to the Items page: by name, or by closest to complete.
+
+- *You'll learn:* sorting inside a `computed` without changing the original data.
+- *Start:* the `filteredItems` computed in [items-page.ts](src/app/items/items-page.ts).
+
+<details>
+<summary>Hint 1</summary>
+
+Add a `sort` signal (for example `signal<'name' | 'progress'>('name')`) and a `<select>` for it.
+In `filteredItems`, sort the result of `.filter(...)` before returning it.
+
+`.sort()` changes the array it's called on. Never sort `this.data.items()` directly, because every
+page shares that array. Sorting the result of `.filter()` is safe, because `filter` returns a new
+array. (Newer JavaScript has `.toSorted()`, which copies for you, but this project's TypeScript
+settings target ES2022, so it isn't available here.)
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+Sorting needs a compare function that returns a negative number if `a` goes first, or positive if
+`b` does:
+
+```ts
+const items = this.data.items().filter(/* ... */);
+if (this.sort() === 'name') return items.sort((a, b) => a.name.localeCompare(b.name));
+return items.sort((a, b) => this.fractionDone(b) - this.fractionDone(a)); // most complete first
+```
+
+For `fractionDone`, use the same counting as idea #3, divided by `item.parts.length`. If you've
+done #3, move that counting into `ProgressService` (for example `partsDone(item)`), so the card
+and the page share one version.
+
+</details>
+
+### Medium: one new concept each
+
+#### 5. "Reset progress" button with confirmation
+
+A button that clears all progress, but only after a second "Yes, reset" click.
+
+- *You'll learn:* local UI state with a `signal`, and adding a method to a service.
+- *Start:* [progress.service.ts](src/app/data/progress.service.ts). A good place for the button is
+  the footer in [app.html](src/app/app.html).
+
+<details>
+<summary>Hint 1</summary>
+
+The service needs a `resetProgress()` method that sets `state` back to an empty progress object.
+`loadProgress()` already has one called `empty`, but it's inside that function. Move it out so both
+can use it.
+
+The confirmation needs one `signal(false)` in the component, which says "are we asking?". Use
+`@if` to show either the reset button or the "Are you sure?" buttons.
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+In the service:
+
+```ts
+function emptyProgress(): Progress {
+  return { parts: {}, built: {}, relics: {}, favourites: {} };
+}
+// in loadProgress(): const empty = emptyProgress();
+
+resetProgress(): void {
+  this.state.set(emptyProgress());
+}
+```
+
+In the template (with `protected readonly confirming = signal(false);` in the class):
+
+```html
+@if (confirming()) {
+  Reset all progress?
+  <button type="button" (click)="progress.resetProgress(); confirming.set(false)">Yes, reset</button>
+  <button type="button" (click)="confirming.set(false)">Cancel</button>
+} @else {
+  <button type="button" (click)="confirming.set(true)">Reset progress</button>
+}
+```
+
+You don't need to save anything yourself: the service's `effect` saves the new empty state.
+
+</details>
+
+#### 6. Remember filters in the URL
+
+Make `/items?q=ash` open with "ash" already in the search box, and keep the URL updated as you type,
+so you can bookmark or share a filtered view.
+
+- *You'll learn:* query parameters, `input()` with `withComponentInputBinding()`, `linkedSignal`, and
+  navigating from code with `Router`.
+- *Start:* [relics-page.ts](src/app/relics/relics-page.ts) already reads `?q=` into its search box.
+
+<details>
+<summary>Hint 1</summary>
+
+There are two halves. **Reading** the URL: copy the relics page's `q = input<string>()` and turn
+`search` into a `linkedSignal` that starts from it. **Writing** the URL: whenever `search` changes,
+tell the router to update the query parameters. An `effect` is a good fit for "whenever this
+changes, do that".
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+```ts
+readonly q = input<string>();
+protected readonly search = linkedSignal(() => this.q() ?? '');
+
+private readonly router = inject(Router);
+private readonly route = inject(ActivatedRoute);
+
+constructor() {
+  effect(() => {
+    const q = this.search().trim();
+    this.router.navigate([], {
+      relativeTo: this.route,         // stay on this page; without it, [] means the home page
+      queryParams: { q: q || null },  // null removes the parameter
+      queryParamsHandling: 'merge',   // keep any other parameters
+      replaceUrl: true,               // don't add a browser history entry per keystroke
+    });
+  });
+}
+```
+
+`Router` and `ActivatedRoute` come from `@angular/router`. URL values are always text, so for a
+checkbox like `hideComplete`, use `input(false, { transform: booleanAttribute })`, which turns
+`"true"` and `"false"` back into booleans. `booleanAttribute` comes from `@angular/core`.
+
+</details>
+
+#### 7. Item detail page at `/items/:id`
+
+Click an item's name to open a page with just that item.
+
+- *You'll learn:* route parameters, `routerLink` with arrays, and handling "not found".
+- *Start:* [app.routes.ts](src/app/app.routes.ts), and "Adding a new page" in section 6.
+
+<details>
+<summary>Hint 1</summary>
+
+Add a route with `path: 'items/:id'`. The `:id` part is a parameter, and thanks to
+`withComponentInputBinding()`, an `id = input<string>()` on the page receives it. Then look the item
+up with a `computed`, and use `@if` to show either the item or a "not found" message.
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+```ts
+readonly id = input<string>();
+protected readonly item = computed(() => this.data.items().find((item) => item.id === this.id()));
+```
+
+On the detail page you can reuse the card: `<app-item-card [item]="item" />` inside
+`@if (item(); as item) { ... }`. (`as item` saves the result, so you don't call `item()` twice.)
+
+Item ids look like `/Lotus/Types/...` and contain slashes. To link to one, use the array form
+`[routerLink]="['/items', item().id]"` in [item-card.html](src/app/items/item-card.html). The array
+form escapes the slashes for you (they become `%2F`). After clicking a link, also try reloading the
+browser on that URL to check it still works.
+
+</details>
+
+#### 8. Write tests for your new code
+
+Cover `isFavourite`/`setFavourite` and `canFarm` in
+[progress.service.spec.ts](src/app/data/progress.service.spec.ts).
+
+- *You'll learn:* unit testing with `TestBed`, and making fake test data.
+- *Start:* the existing tests in that file. Do the favourites ones first; `canFarm` is harder.
+
+<details>
+<summary>Hint 1</summary>
+
+The favourites tests are copies of the existing tests with the names changed: set a favourite,
+check `isFavourite`, and check it's saved (the "saves to localStorage" test shows how, including
+`TestBed.tick()` to run the saving effect).
+
+`canFarm` is harder because it needs game data: which relics drop which parts.
+[app.spec.ts](src/app/app.spec.ts) shows how to answer the data request with fake data, using
+`HttpTestingController`.
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+For `canFarm`, give the data service a tiny fake data set, with one unvaulted relic that drops
+Ash's blade:
+
+```ts
+const relic: Relic = {
+  id: 'Lith A1', tier: 'Lith', code: 'A1', vaulted: false,
+  rewards: [{ name: 'Ash Prime Blade', rarity: 'common', partId: 'ash-blade' }],
+};
+
+TestBed.inject(WarframeDataService);
+TestBed.tick(); // lets httpResource send its request
+TestBed.inject(HttpTestingController)
+  .expectOne('data/warframe-data.json')
+  .flush({ generatedAt: '', relics: [relic], items: [ashPrime] });
+
+expect(progress.canFarm(ashPrime)).toBe(true);
+```
+
+Then write the opposite cases: own both blades and it should be `false`; make the relic
+`vaulted: true` and it should be `false`. A test for each rule is how you know a later change
+didn't break it.
+
+</details>
+
+### Bigger: several concepts together
+
+#### 9. Relic refinement odds
+
+Show each reward's drop chance on relic cards, with a selector for Intact, Exceptional, Flawless
+and Radiant.
+
+- *You'll learn:* combining a page-level setting with card display, passing an extra `input()` to a
+  card, and pipes for number formatting.
+- *Start:* [relics-page.ts](src/app/relics/relics-page.ts) for the selector, and
+  [relic-card.ts](src/app/relics/relic-card.ts) for the display.
+
+Every relic has 3 commons, 2 uncommons and 1 rare. These are the chances for each reward:
+
+| Refinement  | Each common | Each uncommon | Rare |
+| ----------- | ----------- | ------------- | ---- |
+| Intact      | 25.33%      | 11%           | 2%   |
+| Exceptional | 23.33%      | 13%           | 4%   |
+| Flawless    | 20%         | 17%           | 6%   |
+| Radiant     | 16.67%      | 20%           | 10%  |
+
+This is a fixed table in code; the data file doesn't need to change.
+
+<details>
+<summary>Hint 1</summary>
+
+Three pieces: put the table in code as a constant (for example in [models.ts](src/app/data/models.ts)),
+add a `refinement` signal and `<select>` to the relics page, and pass the choice to each card with
+`[refinement]="refinement()"`. The card declares `refinement = input<Refinement>('Intact')` and
+looks up each reward's chance.
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+```ts
+export type Refinement = 'Intact' | 'Exceptional' | 'Flawless' | 'Radiant';
+
+export const REWARD_CHANCE: Record<Refinement, Record<Rarity, number>> = {
+  Intact: { common: 25.33, uncommon: 11, rare: 2 },
+  Exceptional: { common: 23.33, uncommon: 13, rare: 4 },
+  Flawless: { common: 20, uncommon: 17, rare: 6 },
+  Radiant: { common: 16.67, uncommon: 20, rare: 10 },
+};
+```
+
+A template can only use the component's own properties, not constants imported at the top of the
+file. Expose it on the card with `protected readonly chances = REWARD_CHANCE;`, then:
+
+```html
+{{ chances[refinement()][reward.rarity] | number: '1.0-2' }}%
+```
+
+The `number` pipe comes from `DecimalPipe` in `@angular/common`, which goes in the card's `imports`.
+`'1.0-2'` means "at most 2 decimal places".
+
+</details>
+
+#### 10. "Best relics to open"
+
+On the Relics page, sort or highlight the relics you own by how likely they are to give you a part
+you need.
+
+- *You'll learn:* building a ranking with `computed`, and combining both services.
+- *Start:* `progress.isRewardNeeded` and `progress.relicCount` give you everything you need. Do #9
+  first if you want to use the odds.
+
+<details>
+<summary>Hint 1</summary>
+
+Start simple: for each relic, count how many of its rewards you still need. Add a "Sort by: most
+needed" option to the relics page (the sorting pattern from #4), or show the count on each card.
+Then improve it with the odds from #9.
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+Counting needed rewards:
+
+```ts
+relic.rewards.filter((reward) => this.progress.isRewardNeeded(reward.partId)).length
+```
+
+With odds, add up the chances of the needed rewards instead of counting them. The total is the
+chance that opening this relic gives you something you need:
+
+```ts
+relic.rewards
+  .filter((reward) => this.progress.isRewardNeeded(reward.partId))
+  .reduce((total, reward) => total + REWARD_CHANCE[this.refinement()][reward.rarity], 0)
+```
+
+`.reduce` combines a list into one value; here it adds up, starting from `0`. Showing "38% chance
+of a needed part" on each card is a nice result.
+
+</details>
+
+#### 11. Import and export progress
+
+Download your progress as a JSON file, and load it back in another browser.
+
+- *You'll learn:* browser file APIs (`Blob`, `<input type="file">`) from Angular, and checking data
+  you don't control.
+- *Start:* [progress.service.ts](src/app/data/progress.service.ts). `state` is private, so the
+  service needs methods to turn progress into text and back.
+
+<details>
+<summary>Hint 1</summary>
+
+Add two service methods: `exportJson()` returns `JSON.stringify(this.state())`, and
+`importJson(text)` parses text and replaces the state. The component downloads the text as a file,
+and reads a chosen file back with `file.text()`.
+
+Check that an imported file looks like progress before replacing anything. A wrong or broken file
+should show an error, not wipe someone's data.
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+Downloading, in the component:
+
+```ts
+protected download(): void {
+  const blob = new Blob([this.progress.exportJson()], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'relic-tracker-progress.json';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+```
+
+Uploading, with `<input type="file" accept=".json" (change)="upload($event)" />` in the template:
+
+```ts
+protected async upload(event: Event): Promise<void> {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  try {
+    this.progress.importJson(await file.text());
+  } catch {
+    this.importError.set('That file is not Relic Tracker progress.');
+  }
+}
+```
+
+In `importJson`, `JSON.parse` throws on broken text. After parsing, check the result is an object
+whose `parts`, `built` and `relics` are objects, and `throw new Error(...)` if not. Merge it over
+an empty progress object, like `loadProgress()` does, so older files without `favourites` still work.
+
+</details>
+
+#### 12. Ducat values
+
+Show what each part sells for, and a total per item.
+
+- *You'll learn:* the full path from data to screen: the Node script, the JSON file, `models.ts`,
+  and the templates.
+- *Start:* [scripts/update-data.mjs](scripts/update-data.mjs). The generated JSON doesn't contain
+  ducat values yet, so this begins in the script. Running `npm run update-data` needs internet
+  access.
+
+<details>
+<summary>Hint 1</summary>
+
+The Public Export has a `primeSellingPrice` field, but before you write any code, find out *which*
+export entries carry it: the recipes (`ExportRecipes`), the components (`ExportResources`), or both.
+Temporarily `console.log` one matching entry from each and run the script. Then look at
+`resolvePart()` and the line that creates each part,
+`item.parts.set(partId, { id: partId, name: partName, count })`, and add a `ducats` value there.
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+To find the field:
+
+```js
+console.log(resources.ExportResources.find((r) => r.primeSellingPrice));
+console.log(recipes.ExportRecipes.find((r) => r.primeSellingPrice));
+```
+
+Then build a lookup next to `names`, for example
+`new Map(list.filter((x) => x.primeSellingPrice).map((x) => [x.uniqueName, x.primeSellingPrice]))`.
+A reward's `partId` is sometimes the blueprint and sometimes the component (see the comment at the
+top of the script), so you may need to check both ids.
+
+Then add `ducats?: number` to `ItemPart` in [models.ts](src/app/data/models.ts) (the `?` because
+old data won't have it), and show it in [item-card.html](src/app/items/item-card.html). The total
+per item is a `computed` that adds up `part.ducats ?? 0`. Commit the regenerated JSON file too.
+
+</details>
+
+### Code-quality projects
+
+#### 13. A shared filter toolbar component
+
+The Items and Wishlist pages repeat the same search box and "Only farmable now" checkbox. Move them
+into one reusable component.
+
+- *You'll learn:* designing a component with two-way `model()` inputs, as
+  [counter.ts](src/app/shared/counter.ts) does for a single number, and content projection.
+- *Start:* decide what the new component owns (the inputs and checkboxes) and what each page keeps
+  (its signals and its filtered list).
+
+<details>
+<summary>Hint 1</summary>
+
+Generate a component, for example `npx ng generate component shared/item-filters --flat`. Give it
+`search = model('')` and `onlyFarmable = model(false)`, move the toolbar HTML into its template,
+and use it on each page with `[(search)]="search"` and `[(onlyFarmable)]="onlyFarmable"`. Each page
+keeps its own signals and its `filteredItems`.
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+Inside the new component, `[(ngModel)]="search"` works on a `model()` signal just as it does on a
+normal `signal()`. It needs `FormsModule` in its `imports`.
+
+Each page has a different summary ("12 / 340 complete", "2 / 5 items"). Rather than adding an input
+for it, put `<ng-content />` at the end of the toolbar template. Whatever a page writes between the
+tags is placed there:
+
+```html
+<app-item-filters [(search)]="search" [(onlyFarmable)]="onlyFarmable">
+  <span class="summary">{{ completeCount() }} / {{ totalCount() }} complete</span>
+</app-item-filters>
+```
+
+The two pages' filter conditions are also duplicated. Moving "does this item match the search and
+farmable filters?" into one function, for example in `ProgressService`, removes that too.
+
+</details>
+
+#### 14. Signal-based forms
+
+The toolbars use `ngModel` from `FormsModule`. Newer Angular versions have signal-based forms,
+designed to work with signals directly.
+
+- *You'll learn:* the newest forms API.
+- *Start:* do this one last. Search angular.dev for "Signal Forms", and check that the docs match
+  the Angular version in [package.json](package.json).
+
+<details>
+<summary>Hint 1</summary>
+
+Start with the smallest toolbar, then copy the approach to the others. With signal forms you
+usually keep all of a form's values in one signal holding an object, such as
+`{ search: '', onlyFarmable: false }`, instead of one signal per field.
+
+</details>
+
+<details>
+<summary>Hint 2</summary>
+
+Once the values live in one object signal, `filteredItems` reads `this.filters().search` and so on.
+Compare the before and after: the template bindings change, but the filtering logic barely does.
+That shows how well the filtering is separated from the form.
+
+</details>
