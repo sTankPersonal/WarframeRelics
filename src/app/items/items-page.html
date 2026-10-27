@@ -7,6 +7,7 @@
     }
   </select>
   <label><input type="checkbox" [(ngModel)]="hideComplete" /> Hide complete</label>
+  <label><input type="checkbox" [(ngModel)]="onlyFarmable" /> Only farmable now</label>
   <span class="summary">{{ completeCount() }} / {{ totalCount() }} complete</span>
 </div>
 
