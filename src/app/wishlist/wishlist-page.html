@@ -1,5 +1,11 @@
 <div class="toolbar">
   <input type="search" placeholder="Search wishlist…" [(ngModel)]="search" />
+  <select [(ngModel)]="category">
+    <option value="All">All categories</option>
+    @for (c of categories(); track c) {
+      <option [value]="c">{{ c }}</option>
+    }
+  </select>
   <label><input type="checkbox" [(ngModel)]="onlyFarmable" /> Only farmable now</label>
   <span class="summary">{{ filteredItems().length }} / {{ wishlistItems().length }} items</span>
 </div>

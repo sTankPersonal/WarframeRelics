@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ItemCategory } from '../data/models';
 import { ProgressService } from '../data/progress.service';
 import { WarframeDataService } from '../data/warframe-data.service';
 import { ItemCard } from '../items/item-card';
@@ -15,7 +16,12 @@ export class WishlistPage {
   protected readonly progress = inject(ProgressService);
 
   protected readonly search = signal('');
+  protected readonly category = signal<ItemCategory | 'All'>('All');
   protected readonly onlyFarmable = signal(false);
+
+  protected readonly categories = computed(() => [
+    ...new Set(this.data.items().map((item) => item.category)),
+  ]);
 
   protected readonly wishlistItems = computed(() =>
     this.data.items().filter((item) => this.progress.isFavourite(item.id)),
@@ -26,7 +32,8 @@ export class WishlistPage {
     return this.wishlistItems().filter(
       (item) => 
         item.name.toLowerCase().includes(search) &&
-      (!this.onlyFarmable() || this.progress.isComplete(item) || this.progress.canFarm(item)),
+        (this.category() === 'All' || item.category === this.category()) &&
+        (!this.onlyFarmable() || this.progress.isComplete(item) || this.progress.canFarm(item)),
     );
   })
 }
