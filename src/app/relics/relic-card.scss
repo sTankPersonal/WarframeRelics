@@ -1,0 +1,56 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+
+  &.vaulted h2 {
+    color: var(--muted);
+  }
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  app-counter {
+    margin-left: auto;
+  }
+}
+
+.badge {
+  font-size: 0.75rem;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 0.3rem;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}
+
+li {
+  padding: 0.15rem 0;
+  opacity: 0.6;
+
+  &.needed {
+    opacity: 1;
+    font-weight: 600;
+  }
+}
+
+.needed-tag {
+  font-size: 0.7rem;
+  font-weight: normal;
+  color: var(--accent);
+}

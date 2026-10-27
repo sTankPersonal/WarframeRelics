@@ -1,0 +1,14 @@
+services:
+  dev:
+    build: .
+    ports:
+      - "4200:4200"
+    volumes:
+      - .:/app
+      # node_modules lives in a Docker volume instead of the Windows bind mount: much faster installs.
+      - node_modules:/app/node_modules
+    # --poll: file-change events don't reliably cross the Windows -> container bind mount.
+    command: sh -c "npm install && npm start -- --host 0.0.0.0 --poll 1000"
+
+volumes:
+  node_modules:

@@ -1,0 +1,19 @@
+<div class="toolbar">
+  <input type="search" placeholder="Search prime items…" [(ngModel)]="search" />
+  <select [(ngModel)]="category">
+    <option value="All">All categories</option>
+    @for (c of categories(); track c) {
+      <option [value]="c">{{ c }}</option>
+    }
+  </select>
+  <label><input type="checkbox" [(ngModel)]="hideComplete" /> Hide complete</label>
+  <span class="summary">{{ completeCount() }} / {{ totalCount() }} complete</span>
+</div>
+
+<div class="grid">
+  @for (item of filteredItems(); track item.id) {
+    <app-item-card [item]="item" />
+  } @empty {
+    <p>No items match.</p>
+  }
+</div>

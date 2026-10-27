@@ -1,0 +1,23 @@
+<article class="card" [class.vaulted]="relic().vaulted">
+  <header>
+    <h2>{{ relic().id }}</h2>
+    @if (relic().vaulted) {
+      <span class="badge">Vaulted</span>
+    }
+    <app-counter
+      [value]="progress.relicCount(relic().id)"
+      (valueChange)="progress.setRelicCount(relic().id, $event)"
+      [label]="relic().id + ' relic'" />
+  </header>
+
+  <ul>
+    @for (reward of rewards(); track $index) {
+      <li [class]="reward.rarity" [class.needed]="reward.needed">
+        {{ reward.name }}
+        @if (reward.needed) {
+          <span class="needed-tag">needed</span>
+        }
+      </li>
+    }
+  </ul>
+</article>

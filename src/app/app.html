@@ -1,0 +1,22 @@
+<header class="app-header">
+  <h1>Relic Tracker</h1>
+  <nav>
+    <a routerLink="/items" routerLinkActive="active">Prime Items</a>
+    <a routerLink="/relics" routerLinkActive="active">Relics</a>
+  </nav>
+</header>
+
+<main>
+  @if (data.error()) {
+    <p class="error">Couldn't load game data. Run <code>npm run update-data</code> and reload.</p>
+  } @else if (data.isLoading()) {
+    <p>Loading game data…</p>
+  } @else {
+    <router-outlet />
+  }
+</main>
+
+<footer>
+  Data from Warframe's Public Export, generated {{ data.generatedAt() | date: 'medium' }}.
+  Progress is saved in this browser.
+</footer>

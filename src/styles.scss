@@ -1,0 +1,84 @@
+:root {
+  --bg: #12141a;
+  --surface: #1c1f27;
+  --border: #2e323d;
+  --text: #e6e6e6;
+  --muted: #8a8f9c;
+  --accent: #d4af37;
+  --success: #4caf7a;
+  --danger: #e05d5d;
+
+  // Relic reward rarity colours, matching the in-game bronze/silver/gold.
+  --common: #c98a5a;
+  --uncommon: #c0c4cc;
+  --rare: #f2c94c;
+
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+input,
+select,
+button {
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+}
+
+button {
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+input[type='checkbox'] {
+  accent-color: var(--accent);
+}
+
+// Shared by the items and relics pages.
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  input[type='search'] {
+    min-width: 16rem;
+  }
+}
+
+// Rarity text colour; used on relic chips and reward lists.
+.common {
+  color: var(--common);
+}
+.uncommon {
+  color: var(--uncommon);
+}
+.rare {
+  color: var(--rare);
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  text-decoration: none;
+
+  &.vaulted {
+    opacity: 0.6;
+  }
+}

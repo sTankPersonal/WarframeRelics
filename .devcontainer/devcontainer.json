@@ -1,0 +1,15 @@
+{
+  "name": "Relic Tracker",
+  "dockerComposeFile": "../compose.yaml",
+  "service": "dev",
+  "workspaceFolder": "/app",
+  // Keep the container idle instead of running `ng serve`; start the server yourself from the VS Code terminal.
+  "overrideCommand": true,
+  "forwardPorts": [4200],
+  "postCreateCommand": "npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": ["angular.ng-template", "esbenp.prettier-vscode"]
+    }
+  }
+}

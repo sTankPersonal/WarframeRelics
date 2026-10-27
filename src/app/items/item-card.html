@@ -1,0 +1,52 @@
+<article class="card" [class.complete]="complete()">
+  <header>
+    <h2>{{ item().name }}</h2>
+    <span class="category">{{ item().category }}</span>
+    <label class="built">
+      <input type="checkbox" [checked]="built()"
+             (change)="progress.setBuilt(item().id, $any($event.target).checked)" />
+      Built
+    </label>
+  </header>
+
+  @if (!built()) {
+    <ul class="parts">
+      @for (part of parts(); track part.id) {
+        <li>
+          <div class="part-row">
+            <span class="part-name">{{ part.name }}</span>
+            <app-counter
+              [value]="progress.partCount(part.id)"
+              (valueChange)="progress.setPartCount(part.id, $event)"
+              [target]="part.count"
+              [label]="part.name" />
+          </div>
+
+          @if (progress.isPartNeeded(item(), part)) {
+            <div class="sources">
+              @for (source of part.available; track source.relic.id) {
+                <a class="chip" [class]="source.rarity"
+                   routerLink="/relics" [queryParams]="{ q: source.relic.id }">
+                  {{ source.relic.id }}
+                </a>
+              } @empty {
+                <span class="vaulted-note">Vaulted</span>
+              }
+              @if (part.vaulted.length) {
+                <details>
+                  <summary>{{ part.vaulted.length }} vaulted relics</summary>
+                  @for (source of part.vaulted; track source.relic.id) {
+                    <a class="chip vaulted" [class]="source.rarity"
+                       routerLink="/relics" [queryParams]="{ q: source.relic.id }">
+                      {{ source.relic.id }}
+                    </a>
+                  }
+                </details>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</article>

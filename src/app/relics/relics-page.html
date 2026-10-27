@@ -1,0 +1,25 @@
+<div class="toolbar">
+  <input type="search" placeholder="Search relics or rewards…" [(ngModel)]="search" />
+  <select [(ngModel)]="tier">
+    <option value="All">All tiers</option>
+    @for (t of tiers; track t) {
+      <option [value]="t">{{ t }}</option>
+    }
+  </select>
+  <select [(ngModel)]="vault">
+    <option value="all">Vaulted + unvaulted</option>
+    <option value="unvaulted">Unvaulted only</option>
+    <option value="vaulted">Vaulted only</option>
+  </select>
+  <label><input type="checkbox" [(ngModel)]="onlyNeeded" /> Has parts I need</label>
+  <label><input type="checkbox" [(ngModel)]="onlyOwned" /> Owned</label>
+  <span class="summary">{{ filteredRelics().length }} relics</span>
+</div>
+
+<div class="grid">
+  @for (relic of filteredRelics(); track relic.id) {
+    <app-relic-card [relic]="relic" />
+  } @empty {
+    <p>No relics match.</p>
+  }
+</div>
